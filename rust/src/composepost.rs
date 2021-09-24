@@ -9,6 +9,7 @@ use crate::bwrap::Bubblewrap;
 use crate::cxxrsutil::*;
 use crate::ffi::BubblewrapMutability;
 use crate::ffiutil::ffi_view_openat_dir;
+use crate::normalization;
 use crate::passwd::PasswdDB;
 use crate::treefile::Treefile;
 use crate::{bwrap, importer};
@@ -979,6 +980,10 @@ fn rewrite_rpmdb_for_target_inner(rootfs_dfd: &openat::Dir) -> Result<()> {
     // Only one owner now
     let mut dbfd = Rc::try_unwrap(dbfd).unwrap();
     dbfd.seek(std::io::SeekFrom::Start(0))?;
+
+    // In the interests of build stability, rewrite the INSTALLTIME and INSTALLTID tags
+    // to match SOURCE_DATE_EPOCH if it's present
+    normalization::rewrite_rpmdb_timestamps(&mut dbfd)?;
 
     // Fork the target rpmdb to write the content from memory to disk
     let mut bwrap = Bubblewrap::new_with_mutability(rootfs_dfd, BubblewrapMutability::RoFiles)?;
