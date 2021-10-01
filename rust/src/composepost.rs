@@ -994,6 +994,8 @@ fn rewrite_rpmdb_for_target_inner(rootfs_dfd: &openat::Dir) -> Result<()> {
         .run(cancellable.gobj_rewrap())
         .context("Failed to run rpmdb --importdb")?;
 
+    normalization::normalize_rpmdb(rootfs_dfd, RPMOSTREE_RPMDB_LOCATION)?;
+
     tempetc.undo()?;
 
     Ok(())
